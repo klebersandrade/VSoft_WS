@@ -36,4 +36,10 @@ public class Vaga {
 	public void setStatus(VagaStatus status) {
 		this.status = status;
 	}
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
 }

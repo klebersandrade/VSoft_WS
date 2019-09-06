@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>br.com.vsoft</groupId>
 	<artifactId>estacionamento</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>estacionamento</name>
 	<description>API Rest Full da VSoft</description>
 

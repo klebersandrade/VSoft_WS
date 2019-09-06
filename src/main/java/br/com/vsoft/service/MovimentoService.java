@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import br.com.vsoft.enumerator.VagaStatus;
 import br.com.vsoft.exception.ResourceNotFoundException;
 import br.com.vsoft.model.Cliente;
 import br.com.vsoft.model.Estaciona;
@@ -30,9 +31,41 @@ public class MovimentoService {
 	public ResponseEntity<Object> getMovimentos(){
 		return new ResponseEntity<Object>(movimentoRepository.findAll(), HttpStatus.OK);
 	}
+	
+	public ResponseEntity<Object> getMovimentosByVaga(Long id){
+		return new ResponseEntity<Object>(vagaRepository.findById(id).map(vaga -> {	
+			Movimento movimento = movimentoRepository.findByVaga(vaga);
+			movimento.setDataSaida(new Date());
+			int horasExtras = calcQtdHorasExtras(movimento);
+			if(horasExtras >= 3) {
+				horasExtras = horasExtras - 2;
+				movimento.setQtdHorasExtras(horasExtras);
+				movimento.setValorHorasExtras(3.000 * horasExtras);	
+			}			
+			movimento.setValorPermanencia(7.000);
+			movimento.setValorTotal(movimento.getValorPermanencia() + movimento.getValorHorasExtras());
+			return movimento;
+		}).orElseThrow(() -> new ResourceNotFoundException("Vaga:  "+ id + " não encontrada!"))
+				, HttpStatus.OK);
+	}
+	
+	public ResponseEntity<Object> getMovimentoAbertoById(Long id){
+		Movimento movimento = movimentoRepository.findById(id).get();
+		movimento.setDataSaida(new Date());
+		int horasExtras = calcQtdHorasExtras(movimento);
+		if(horasExtras >= 3) {
+			horasExtras = horasExtras - 2;
+			movimento.setQtdHorasExtras(horasExtras);
+			movimento.setValorHorasExtras(3.000 * horasExtras);	
+		}			
+		movimento.setValorPermanencia(7.000);
+		movimento.setValorTotal(movimento.getValorPermanencia() + movimento.getValorHorasExtras());
+		return new ResponseEntity<Object>(movimento, HttpStatus.OK);
+	}
 
+//	Metodo para gerar os relatórios
 	public ResponseEntity<Object> getMovimentos(Date dataInicial, Date dataFinal){
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");  
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");  
 		String strDataIni = dateFormat.format(dataInicial);  
 		String strDataFin = dateFormat.format(dataFinal);  
 		return new ResponseEntity<Object>(movimentoRepository.getMovimentosPeriodo(strDataIni, strDataFin), HttpStatus.OK);
@@ -49,6 +82,7 @@ public class MovimentoService {
 		return new ResponseEntity<Object>(movimentoRepository.save(movimento), HttpStatus.OK);
 	}
 	
+//	Estacionar em uma vaga
 	public ResponseEntity<Object> setEstaciona(Estaciona estaciona){		
 		Vaga vaga = vagaRepository.findByNumero(estaciona.getVagaNumero());
 		if(vaga == null) {
@@ -62,6 +96,9 @@ public class MovimentoService {
 			
 			cliente = clienteRepository.save(cliente);
 		}
+		
+		vaga.setStatus(VagaStatus.OCUPADA);
+		vaga = vagaRepository.save(vaga);
 		Movimento movimento = new Movimento();
 		movimento.setCliente(cliente);
 		movimento.setVaga(vaga);
@@ -73,17 +110,18 @@ public class MovimentoService {
 		return new ResponseEntity<Object>(movimentoRepository.save(movimento), HttpStatus.OK);
 	}
 	
+//	Pagar o Ticket
 	public ResponseEntity<Object> setPagarTicket(Movimento mov){
-		if(!movimentoRepository.existsById(mov.getId())) {
-			return new ResponseEntity<Object>("Movimento: "+mov.getId()+" não encontrado!", HttpStatus.NO_CONTENT);
-		}
-		Movimento movimento = movimentoRepository.getOne(mov.getId());		
-		int horasExtras = calcQtdHorasExtras(movimento);
-		movimento.setDataSaida(new Date());
-		movimento.setQtdHorasExtras(horasExtras);
-		movimento.setValorHorasExtras(3.000 * horasExtras);
-		movimento.setValorPermanencia(7.000);
-		movimento.setValorTotal(movimento.getValorPermanencia() + movimento.getValorHorasExtras());
+		Movimento movimento = movimentoRepository.findById(mov.getId()).get();
+		movimento.setDataSaida(mov.getDataSaida());
+		movimento.setQtdHorasExtras(mov.getQtdHorasExtras());
+		movimento.setValorHorasExtras(mov.getValorHorasExtras());				
+		movimento.setValorPermanencia(mov.getValorPermanencia());
+		movimento.setValorTotal(mov.getValorTotal());
+		
+		Vaga vaga = vagaRepository.findByNumero(mov.getVaga().getNumero());
+		vaga.setStatus(VagaStatus.LIVRE);
+		vaga = vagaRepository.save(vaga);
 		
 		return new ResponseEntity<Object>(movimentoRepository.save(movimento), HttpStatus.OK);
 	}
@@ -91,7 +129,7 @@ public class MovimentoService {
 	private int calcQtdHorasExtras(Movimento movimento) {
 		Date dataEntrada = movimento.getDataEntrada();
 		Date dataSaida = movimento.getDataSaida();
-		long horas = (dataEntrada.getTime() - dataSaida.getTime()) / 3600000; 
+		long horas = (dataSaida.getTime() - dataEntrada.getTime()) / 3600000; 
 		return (int)horas;
 	}
 }

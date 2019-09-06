@@ -61,4 +61,7 @@ public class VagaService {
 		
 		return new ResponseEntity<Object>(listaRetorno, HttpStatus.OK);
 	}
+	public ResponseEntity<Object> getVagaQtd(){
+		return new ResponseEntity<Object>(vagaRepository.getQtdVagas(), HttpStatus.OK);
+	}
 }

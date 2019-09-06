@@ -33,4 +33,17 @@ public class VagaController {
 	public ResponseEntity<Object> setVaga(@Valid @RequestBody Vaga vaga) {
 		return vagaService.setVaga(vaga);
 	}
+	
+//	Pegando situações das vagas
+//	Aqui retorna tanto a situação (Livre|Ocupado), quando o movimento (Atual ocupação) dessa vaga
+	@GetMapping("/vagas/situacoes")
+	public ResponseEntity<Object> getVagasSituacoes() {
+		return vagaService.getVagaSituacoes();
+	}
+	
+//	Método específico para retornar a quantidade de vagas e a disponibilidade
+	@GetMapping("/vagas/qtdvagas")
+	public ResponseEntity<Object> getQtdVagas(){
+		return vagaService.getVagaQtd();
+	}
 }

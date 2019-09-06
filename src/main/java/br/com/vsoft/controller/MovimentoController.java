@@ -26,11 +26,22 @@ public class MovimentoController {
 		return movimentoService.getMovimentoById(id);
 	}
 	
+	@GetMapping("/movimentosbyvaga/{id}")
+	public ResponseEntity<Object> getMovimentoByVaga(@PathVariable Long id) {
+		return movimentoService.getMovimentosByVaga(id);
+	}
+	
+	@GetMapping("/movimentoabertobyid/{id}")
+	public ResponseEntity<Object> getMovimentoAbertoById(@PathVariable Long id) {
+		return movimentoService.getMovimentoAbertoById(id);
+	}
+	
 	@GetMapping("/movimentos")
 	public ResponseEntity<Object> getMovimentos() {
 		return movimentoService.getMovimentos();
 	}
 	
+//	Método para gerar os relatórios
 	@GetMapping("/movimentos/{dataInicial}/{dataFinal}")
 	public ResponseEntity<Object> getMovimentosPeriodo(@PathVariable Date dataInicial, @PathVariable Date dataFinal) {
 		return movimentoService.getMovimentos(dataInicial, dataFinal);
@@ -40,12 +51,12 @@ public class MovimentoController {
 	public ResponseEntity<Object> setMovimento(@Valid @RequestBody Movimento movimento) {
 		return movimentoService.setMovimento(movimento);
 	}
-	
+//	Estacionar veículo
 	@PostMapping("/estaciona")
 	public ResponseEntity<Object> setEstaciona(@Valid @RequestBody Estaciona estaciona) {
 		return movimentoService.setEstaciona(estaciona);
 	}
-	
+//	Pagar o ticket
 	@PostMapping("/pagaticket")
 	public ResponseEntity<Object> setPagaTicket(@Valid @RequestBody Movimento movimento) {
 		return movimentoService.setPagarTicket(movimento);
